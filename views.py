@@ -254,6 +254,7 @@ def associate_success(request, openid_response,  redirect_to):
     request.session['openids'] = openids
     uassoc = UserAssociation(openid_url=str(openid), user_id=request.user.id)
     uassoc.save(send_email=False)
+    messages.info(request, _('Openid идентификатор успешно добавлен'))
     return HttpResponseRedirect(urllib.urlencode(urlquote(redirect_to)))
 
 
@@ -273,13 +274,13 @@ def dissociate(request):
     redirect_to = request.GET.get(REDIRECT_FIELD_NAME, None) or request.path or getattr(settings, 'LOGIN_REDIRECT_URL', '/')
     openid_url =  request.GET.get('openid_url', None)
     if not openid_url:
-        messages.warn(request, _(u'Вы не указали openid идентификатор.'))
+        messages.warning(request, _(u'Вы не указали openid идентификатор.'))
         return HttpResponseRedirect(redirect_to)
     rels =  UserAssociation.objects.filter(user__id = request.user.id)
     associated_openids =  [rel.openid_url for rel in rels]
     if len(associated_openids) ==  1 and  request.user.has_usable_password():
-        messages.warn(request, _(u"У вас должен быть установлен пароль"))
-        return HttpResponseRedirect(redirect_url)
+        messages.warning(request, _(u"У вас должен быть установлен пароль"))
+        return HttpResponseRedirect(redirect_to)
     UserAssociation.objects.get(openid_url__exact=openid_url).delete()
     if openid_url == request.session.get('openid_url'):
         del request.session['openid_url']
