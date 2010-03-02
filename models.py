@@ -14,22 +14,27 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 
 
 __all__ = ['Nonce', 'Association', 'UserAssociation']
 
 class Nonce(models.Model):
-    """ openid nonce """
     server_url = models.CharField(max_length=255)
     timestamp = models.IntegerField()
     salt = models.CharField(max_length=40)
     
     def __unicode__(self):
-        return u"Nonce: %s" % self.id
+        return _("Nonce: %s" % self.id)
+    
+    class Meta:
+        db_table = 'Nonce'
+        verbose_name = _('Nonce')
+        verbose_name_plural = _('Nonces')
+        
 
 class Association(models.Model):
-    """ association openid url and lifetime """
     server_url = models.TextField(max_length=2047)
     handle = models.CharField(max_length=255)
     secret = models.TextField(max_length=255) # Stored base64 encoded
@@ -38,17 +43,18 @@ class Association(models.Model):
     assoc_type = models.TextField(max_length=64)
     
     def __unicode__(self):
-        return u"Association: %s, %s" % (self.server_url, self.handle)
+        return _("Association: %(url)s, %(handle)s" % {'url': self.server_url, 'handle':self.handle})
+    class Meta:
+        db_table = 'Association'
+        verbose_name = _('Association')
+        verbose_name_plural = _('Associations')
 
 class UserAssociation(models.Model):
-    """ 
-    model to manage association between openid and user 
-    """
     openid_url = models.CharField(primary_key=True, blank=False, max_length=255)
     user = models.ForeignKey(User)
     
     def __unicode__(self):
-        return "Openid %s with user %s" % (self.openid_url, self.user)
+        return _("Openid %(url)s with user %(user)s" % {'url': self.openid_url, 'user': self.user})
         
     def save(self, send_email=False):
         super(UserAssociation, self).save()
@@ -65,4 +71,9 @@ class UserAssociation(models.Model):
                                         })
 
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.user.email])
+    
+    class Meta:
+        db_table = 'user_association'
+        verbose_name = _('User association')
+        verbose_name_plural = _('User associations')
         
