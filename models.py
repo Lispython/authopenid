@@ -29,7 +29,7 @@ class Nonce(models.Model):
         return _("Nonce: %s" % self.id)
     
     class Meta:
-        db_table = 'Nonce'
+        db_table = 'authopenid_nonce'
         verbose_name = _('Nonce')
         verbose_name_plural = _('Nonces')
         
@@ -45,7 +45,7 @@ class Association(models.Model):
     def __unicode__(self):
         return _("Association: %(url)s, %(handle)s" % {'url': self.server_url, 'handle':self.handle})
     class Meta:
-        db_table = 'Association'
+        db_table = 'authopenid_association'
         verbose_name = _('Association')
         verbose_name_plural = _('Associations')
 
@@ -73,7 +73,7 @@ class UserAssociation(models.Model):
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.user.email])
     
     class Meta:
-        db_table = 'user_association'
+        db_table = 'authopenid_user_association'
         verbose_name = _('User association')
         verbose_name_plural = _('User associations')
         
