@@ -8,7 +8,7 @@ from django.utils.http import urlquote
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.contrib.auth.decorators import login_required
 from django.contrib import auth as cauth
 from django.contrib import messages
