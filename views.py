@@ -3,7 +3,7 @@
 import urllib
 import logging
 
-from lobbing import getLogger
+from logging import getLogger
 from django.conf import settings
 from django.utils.http import urlquote
 from django.contrib.auth.models import User
