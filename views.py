@@ -3,6 +3,7 @@
 import urllib
 import logging
 
+from lobbing import getLogger
 from django.conf import settings
 from django.utils.http import urlquote
 from django.contrib.auth.models import User
@@ -34,6 +35,7 @@ try:
 except ImportError:
     from yadis import xri
 
+logger = getLogger('authopenid.errors')
  
 def ask_openid(request, openid_url, callback_url, redirect_to, user = None):
     """Функция формирования запроса к серверу в соответствии со спецификацией
@@ -52,7 +54,7 @@ def ask_openid(request, openid_url, callback_url, redirect_to, user = None):
         return failure(request, e)
     if not user:
         if use_sreg:
-            logging.debug(u'Сервер использует sreg')
+            logger.debug(u'Сервер использует sreg')
             sreg_request = sreg.SRegRequest(
                 optional = app_settings.OPTIONAL_FIELDS,
                 required = app_settings.REQUIRED_FIELDS,
@@ -60,13 +62,13 @@ def ask_openid(request, openid_url, callback_url, redirect_to, user = None):
             auth_request.addExtension(sreg_request)
 
         if use_ax:
-            logging.debug(u'Сервер использует ax')
+            logger.debug(u'Сервер использует ax')
             ax_request = ax.FetchRequest()
             for detail, req in app_settings.DEFAULT_DETAILS_FIELDS:
                 ax_request.add(ax.AttrInfo(app_settings.AX_URIS[detail], required=req))
             auth_request.addExtension(ax_request)
     url = auth_request.redirectURL(trust_root, return_to)
-    logging.debug(u"Переадресуем по адресу: %s" % url)
+    logger.debug(u"Переадресуем по адресу: %s" % url)
     return HttpResponseRedirect(url)
 
 def default_on_failure(request, message):
@@ -106,7 +108,7 @@ def login(request):
         try:
             user = UserAssociation.objects.get(openid_url=openid_url).user
         except UserAssociation.DoesNotExist, e:
-            logging.debug(u'Пользователя с идентификатором %s не зарегистрировано' % openid_url)
+            logger.debug(u'Пользователя с идентификатором %s не зарегистрировано' % openid_url)
             user = None
         return ask_openid(request, openid_url, reverse('oid_complete_signin'), redirect_to, user)
             
@@ -155,10 +157,10 @@ def login_success(request, openid_response, redirect_to):
     user = cauth.authenticate(openid_url=openid_response.identity_url)
     if user:
         cauth.login(request, user)
-        logging.debug(u'Авторизирован как %s', user)
+        logger.debug(u'Авторизирован как %s', user)
         return HttpResponseRedirect(redirect_to)
     else:
-        logging.debug(u"Незарегистрирован %s" % request.session.get('openid'))
+        logger.debug(u"Незарегистрирован %s" % request.session.get('openid'))
         return HttpResponseRedirect(u"%s?%s" % (reverse('oid_registration'), \
                                                 urllib.urlencode({REDIRECT_FIELD_NAME: urlquote(redirect_to)})))
 
@@ -177,13 +179,13 @@ def registration(request):
     if not openid or openid is None:
         return HttpResponseRedirect(u"%s?%s" % (reverse('oid_login'), urllib.urlencode({REDIRECT_FIELD_NAME: urlquote(next)})))
     pinitial = openid.sreg
-    logging.debug(openid.sreg)
-    logging.debug(openid.ax_resp)
+    logger.debug(openid.sreg)
+    logger.debug(openid.ax_resp)
     if openid.ax_resp:
         for k, v in openid.ax_resp.items():
             if not pinitial.get(k):
                 pinitial[k] = v
-    logging.debug(u"Окончательные данные \n %s" % pinitial)
+    logger.debug(u"Окончательные данные \n %s" % pinitial)
     initial = {}
     for k, v in pinitial.items():
         initial[get_name(k)] = v
@@ -236,7 +238,7 @@ def associate(request):
                 if UserAssociation.objects.filter(openid_url = openid_url):
                     return default_on_failure(request, _('Openid идетификатор %s уже зарегистрирован в системе') % openid_url)
             except UserAssociation.DoesNotExist, e:
-                logging.debug(u'Пользователя с идентификатором %s не зарегистрировано' % openid_url)
+                logger.debug(u'Пользователя с идентификатором %s не зарегистрировано' % openid_url)
             return ask_openid(request, form.cleaned_data['openid_url'],  reverse('oid_associate_complete'), redirect_to, request.user)
     else:
         form = OpenidSigninForm()
@@ -255,6 +257,9 @@ def associate_success(request, openid_response,  redirect_to):
     uassoc = UserAssociation(openid_url=str(openid), user_id=request.user.id)
     uassoc.save(send_email=False)
     messages.info(request, _('Openid идентификатор успешно добавлен'))
+    logger.debug("aasociate_success")
+    logger.debug(redirect_to)
+    logger.debug(urlquote(redirect_to))
     return HttpResponseRedirect(urllib.urlencode(urlquote(redirect_to)))
 
 
