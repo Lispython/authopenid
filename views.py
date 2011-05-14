@@ -257,10 +257,7 @@ def associate_success(request, openid_response,  redirect_to):
     uassoc = UserAssociation(openid_url=str(openid), user_id=request.user.id)
     uassoc.save(send_email=False)
     messages.info(request, _('Openid идентификатор успешно добавлен'))
-    logger.debug("aasociate_success")
-    logger.debug(redirect_to)
-    logger.debug(urlquote(redirect_to))
-    return HttpResponseRedirect(urllib.urlencode(urlquote(redirect_to)))
+    return HttpResponseRedirect(urlquote(redirect_to))
 
 
 
